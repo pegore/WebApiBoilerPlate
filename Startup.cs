@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
 using RabbitMQ.Client;
 using System;
 using System.Linq;
@@ -45,6 +46,15 @@ namespace Hbsis.Icebev.Api
             var connection = factory.CreateConnection();
             services.AddHealthChecks().AddRabbitMQ(sp => connection);
             services.AddHealthChecksUI();
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "WebApiBoilerPlate",
+                    Version = "v1"
+                });
+            });
+
         }
 
 
@@ -60,7 +70,7 @@ namespace Hbsis.Icebev.Api
                 app.UseExceptionHandler("/Home/Error");
                 app.UseHsts();
             }
-          
+
 
             app.UseHealthChecks("/healthcheck", new HealthCheckOptions()
             {
@@ -91,6 +101,16 @@ namespace Hbsis.Icebev.Api
 
             // Ativa o dashboard para a visualização da situação de cada Health Check
             app.UseHealthChecksUI();
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                // Linha adicionada para resolver seguinte erro: Fetch error Not Found /swagger/v1/swagger.json
+                string swaggerJsonBasePath = string.IsNullOrWhiteSpace("swagger") ? "." : "..";
+                c.SwaggerEndpoint($"{swaggerJsonBasePath}/swagger/v1/swagger.json", "WebApiBoilerPlate");
+            });
+
+
+
             app.UseHttpsRedirection();
             app.UseRouting();
             app.UseAuthorization();
